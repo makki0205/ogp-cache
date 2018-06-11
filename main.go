@@ -1,14 +1,30 @@
 package main
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/makki0205/ogp-cache/service"
 )
 
 func main() {
 	r := gin.Default()
 	r.Use(cros)
+	r.GET("/v1", func(c *gin.Context) {
+		url := c.Query("url")
+		ogp, _ := service.PurseOgp(url)
+
+		//計測
+		start, ok := c.Get("start_time")
+		if ok {
+			c.Header("X-Server-Latency", time.Since(start.(time.Time)).String())
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"ogp": ogp,
+		})
+	})
+	r.Run()
 }
 
 func cros(c *gin.Context) {
